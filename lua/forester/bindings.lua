@@ -127,7 +127,7 @@ local function new_random(prefix, tree_dir, config)
 end
 
 -- where should the dest come from?
-local function template(pfx, tmpl_addr, dest, config)
+local function template(pfx, tmpl_addr, tree_dir, config)
   Job:new({
     command = "forester",
     args = {
@@ -135,7 +135,8 @@ local function template(pfx, tmpl_addr, dest, config)
       "--prefix",
       pfx,
       "--dest",
-      dest("--template"),
+      tree_dir,
+      "--template",
       tmpl_addr,
       config,
     },
@@ -145,10 +146,6 @@ local function template(pfx, tmpl_addr, dest, config)
         vim.cmd("edit " .. res:result()[1])
       end)
     end),
-    on_stderr = function(error, data)
-      vim.print(vim.inspect(error))
-      vim.print(vim.inspect(data))
-    end,
   }):sync()
 end
 

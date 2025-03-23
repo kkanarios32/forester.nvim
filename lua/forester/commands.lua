@@ -27,6 +27,20 @@ local select = function(items, callback)
   end
 end
 
+local select_template = function(callback)
+  -- Get all filenames with a .tree extension from the "templates" directory
+  local templates_dir = vim.fn.finddir("templates", ".;")
+  local filenames = vim.fn.readdir(templates_dir)
+
+  -- Remove the '.tree' extension from each filename
+  local templates = {}
+  for _, file in ipairs(filenames) do
+    local name = file:gsub("%.tree$", "")
+    table.insert(templates, name)
+  end
+  select(templates, callback)
+end
+
 local select_prefix = function(callback)
   if vim.g.forester_current_config.prefixes == nil then
     do
@@ -92,6 +106,15 @@ M.commands = {
     end)
   end,
 
+  template = function()
+    select_template(function(choice)
+      select_prefix(function(pfx)
+        local path = config.dir_of_latest_tree_of_prefix(choice)
+        local new_tree = Forester.template(pfx, choice, path, vim.g.forester_current_config)
+      end)
+    end)
+  end,
+
   transclude_new = function()
     select(vim.g.forester_current_config.prefixes, function(choice)
       do
@@ -100,6 +123,7 @@ M.commands = {
         local addr = util.filename(new_tree):match("(.+)%..+$")
         local content = { "\\transclude{" .. addr .. "}" }
         vim.api.nvim_put(content, "c", true, true)
+        vim.cmd("edit " .. new_tree)
       end
     end)
   end,
@@ -111,6 +135,7 @@ M.commands = {
       local addr = util.filename(new_tree):match("(.+)%..+$")
       local content = { "[](" .. addr .. ")" } --  NOTE: We should improve the workflow with snippets or something similar
       vim.api.nvim_put(content, "c", true, true)
+      vim.cmd("edit " .. new_tree)
     end)
   end,
 }
