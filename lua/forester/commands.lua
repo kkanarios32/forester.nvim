@@ -5,6 +5,11 @@ local config = require("forester.config")
 local pickers = require("forester.pickers")
 local M = {}
 
+local insert_below = function(content)
+  local line_count = vim.api.nvim_buf_line_count(0)
+  vim.api.nvim_buf_set_lines(0, line_count, line_count, false, content)
+end
+
 local select = function(items, callback)
   if #items == 1 then
     do
@@ -106,11 +111,54 @@ M.commands = {
     end)
   end,
 
-  template = function()
+  template = function(args)
+    local choice = args[1]
+    if choice == "" then
+      vim.print("Error: No template specified")
+      return
+    end
+    select_prefix(function(pfx)
+      local path = config.dir_of_latest_tree_of_prefix(choice)
+      local new_tree = Forester.template(pfx, choice, path, vim.g.forester_current_config)[1]
+      vim.cmd("edit " .. new_tree)
+    end)
+  end,
+
+  template_search = function()
     select_template(function(choice)
       select_prefix(function(pfx)
         local path = config.dir_of_latest_tree_of_prefix(choice)
-        local new_tree = Forester.template(pfx, choice, path, vim.g.forester_current_config)
+        local new_tree = Forester.template(pfx, choice, path, vim.g.forester_current_config)[1]
+        vim.cmd("edit " .. new_tree)
+      end)
+    end)
+  end,
+
+  transclude_template = function(args)
+    local choice = args[1]
+    if choice == "" then
+      vim.print("Error: No template specified")
+      return
+    end
+    select_prefix(function(pfx)
+      local path = config.dir_of_latest_tree_of_prefix(choice)
+      local new_tree = Forester.template(pfx, choice, path, vim.g.forester_current_config)[1]
+      local addr = util.filename(new_tree):match("(.+)%..+$")
+      local content = { "\\transclude{" .. addr .. "}" }
+      vim.api.nvim_put(content, "c", true, true)
+      vim.cmd("edit " .. new_tree)
+    end)
+  end,
+
+  transclude_template_search = function()
+    select_template(function(choice)
+      select_prefix(function(pfx)
+        local path = config.dir_of_latest_tree_of_prefix(choice)
+        local new_tree = Forester.template(pfx, choice, path, vim.g.forester_current_config)[1]
+        local addr = util.filename(new_tree):match("(.+)%..+$")
+        local content = { "\\transclude{" .. addr .. "}" }
+        vim.api.nvim_put(content, "c", true, true)
+        vim.cmd("edit " .. new_tree)
       end)
     end)
   end,
@@ -124,6 +172,8 @@ M.commands = {
         local content = { "\\transclude{" .. addr .. "}" }
         vim.api.nvim_put(content, "c", true, true)
         vim.cmd("edit " .. new_tree)
+        -- local new_content = { "\\tag{" .. os.date("%Y-%m-%d") .. "}" }
+        -- insert_below(new_content)
       end
     end)
   end,
@@ -152,7 +202,7 @@ function M.parse(args)
   return table.remove(parts, 1) or "", parts
 end
 
-function M.cmd(cmd)
+function M.cmd(cmd, args)
   local command = M.commands[cmd]
   if command == nil then
     vim.print("Invalid forester command '" .. cmd .. "'")
@@ -165,7 +215,11 @@ function M.cmd(cmd)
     elseif vim.fn.executable("forester") ~= 1 then
       vim.notify("The `forester` command is not available!", vim.log.levels.WARN)
     else
-      command()
+      if args ~= nil then
+        command(args)
+      else
+        command()
+      end
     end
   end
 end

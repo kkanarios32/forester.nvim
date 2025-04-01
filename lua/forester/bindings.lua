@@ -128,7 +128,7 @@ end
 
 -- where should the dest come from?
 local function template(pfx, tmpl_addr, tree_dir, config)
-  Job:new({
+  local job = Job:new({
     command = "forester",
     args = {
       "new",
@@ -140,13 +140,9 @@ local function template(pfx, tmpl_addr, tree_dir, config)
       tmpl_addr,
       config,
     },
-
-    on_exit = vim.schedule_wrap(function(res)
-      vim.schedule(function()
-        vim.cmd("edit " .. res:result()[1])
-      end)
-    end),
-  }):sync()
+  })
+  job:sync()
+  return job:result()
 end
 
 bindings.watch = watch

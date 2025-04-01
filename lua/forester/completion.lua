@@ -116,7 +116,8 @@ function source:complete(params, callback)
             filterText = pfx .. " " .. "random",
             documentation = "create a new tree with prefix `" .. pfx .. "` (randomized id)",
             labelDetails = { description = "random" },
-            data = { isPrefix = true, isRandom = true, closingDelim = source:closing_delim(text_before_cursor) },
+            -- data = { isPrefix = true, isRandom = true, closingDelim = source:closing_delim(text_before_cursor) },
+            data = { isPrefix = true, isRandom = true },
           }
         end)
       end
@@ -126,8 +127,11 @@ function source:complete(params, callback)
       for _, v in pairs(prefix_random_items) do
         table.insert(items, v)
       end
+      -- local function insert_text(addr)
+      --   return addr .. source:closing_delim(text_before_cursor)
+      -- end
       local function insert_text(addr)
-        return addr .. source:closing_delim(text_before_cursor)
+        return addr
       end
       for addr, data in pairs(cache) do
         local title
@@ -177,8 +181,9 @@ function source:execute(item, callback)
     local addr = util.filename(new_tree):match("(.+)%..+$")
     -- last 5 chars: -XXXX
     local id = string.sub(addr, -5)
-    local closing_delim = data.closingDelim or ""
-    vim.api.nvim_put({ id .. closing_delim }, "c", true, true)
+    -- local closing_delim = data.closingDelim or ""
+    -- vim.api.nvim_put({ id .. closing_delim }, "c", true, true)
+    vim.api.nvim_put({ id }, "c", true, true)
     callback()
   else
     callback(item)

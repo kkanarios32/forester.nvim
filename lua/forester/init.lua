@@ -47,8 +47,8 @@ local function setup()
   local forester_group = vim.api.nvim_create_augroup("ForesterGroup", { clear = true })
 
   vim.api.nvim_create_user_command("Forester", function(cmd)
-    local prefix, _ = commands.parse(cmd.args)
-    commands.cmd(prefix)
+    local prefix, args = commands.parse(cmd.args)
+    commands.cmd(prefix, args)
   end, {
     bar = true,
     bang = true,
